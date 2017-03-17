@@ -3,6 +3,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -16,18 +17,28 @@ import (
 )
 
 func main() {
+	//go run ./testConfig.go --username="aaa" --passwd='aaa' --ip_port="192.168.6.87" --cmd='display version'
+	username := flag.String("username", "aaa", "username")
+	passwd := flag.String("passwd", "aaa", "password")
+	ip_port := flag.String("ip_port", "1.1.1.1:22", "ip and port")
+	cmdstring := flag.String("cmd", "display arp statistics all", "cmdstring")
+	flag.Parse()
+	fmt.Println("username:", *username)
+    fmt.Println("passwd:", *passwd)
+    fmt.Println("ip_port:", *ip_port)
+    fmt.Println("cmdstring:", *cmdstring)
 	config := &ssh.ClientConfig{
-		User: "aaa",
+		User: *username,
 		Auth: []ssh.AuthMethod{
-			ssh.Password("aaa"),
+			ssh.Password(*passwd),
 		},
 		Config: ssh.Config{
 			Ciphers: []string{"aes128-cbc"},
 		},
 	}
 	// config.Config.Ciphers = append(config.Config.Ciphers, "aes128-cbc")
-	clinet, err := ssh.Dial("tcp", "1.1.1.1:22", config)
-	checkError(err, "connet 1.1.1.1")
+	clinet, err := ssh.Dial("tcp", *ip_port, config)
+	checkError(err, "connet " + *ip_port)
 
 	session, err := clinet.NewSession()
 	defer session.Close()
@@ -61,15 +72,11 @@ func main() {
 		log.Fatal(err)
 	}
 	<-out //ignore the shell output
-	in <- "display version"
-	in <- "display arp statistics all"
+	in <- *cmdstring
 
-	fmt.Printf("%s\n", <-out)
 	fmt.Printf("%s\n", <-out)
 
 	in <- "quit"
-	in <- "quit"
-	_ = <-out
 	_ = <-out
 	session.Wait()
 }
@@ -90,7 +97,7 @@ func MuxShell(w io.Writer, r, e io.Reader) (chan<- string, <-chan string) {
 		for cmd := range in {
 			wg.Add(1)
 			w.Write([]byte(cmd + "\n"))
-			wg.Wait() //控制每次goroutine执行一条命令
+			wg.Wait()
 		}
 	}()
 
@@ -109,11 +116,9 @@ func MuxShell(w io.Writer, r, e io.Reader) (chan<- string, <-chan string) {
 			}
 			t += n
 			result := string(buf[:t])
-			//处理设备分页符
 			if strings.Contains(string(buf[t-n:t]), "More") {
 				w.Write([]byte("\n"))
 			}
-			//完成一条操作清空goroutine
 			if strings.Contains(result, "username:") ||
 				strings.Contains(result, "password:") ||
 				strings.Contains(result, ">") {
