@@ -4,6 +4,22 @@
 * 对终端屏宽产生的分页符做处理
 * 可用作单台设备执行命令打印输出之用
 
+#use case
+```
+go run ./testConfig.go --username="aaa" --passwd='aaa' --ip_port="192.168.6.87" --cmd='display version'
+-bash-4.3$ go run ./testConfig.go -h
+Usage of /tmp/go-build918643740/command-line-arguments/_obj/exe/testConfig:
+  -cmd string
+        cmdstring (default "display arp statistics all")
+  -ip_port string
+        ip and port (default "1.1.1.1:22")
+  -passwd string
+        password (default "aaa")
+  -username string
+        username (default "aaa")
+exit status 2
+```
+
 #重点code说明
 ```
 ...
@@ -69,11 +85,11 @@ BKP 1 version information:
 ...
 ...
 ...
-<HK-HK-CW-F-1.CN2>
+<HK-HK-CW-1>
 display arp statistics all
 Dynamic: 345     Static: 0    
 
-<HK-HK-CW-F-1.CN2>
+<HK-HK-CW-1>
 ```
 
 
