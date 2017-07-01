@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
 	"strings"
 	"sync"
@@ -24,21 +25,24 @@ func main() {
 	cmdstring := flag.String("cmd", "display arp statistics all", "cmdstring")
 	flag.Parse()
 	fmt.Println("username:", *username)
-    fmt.Println("passwd:", *passwd)
-    fmt.Println("ip_port:", *ip_port)
-    fmt.Println("cmdstring:", *cmdstring)
+	fmt.Println("passwd:", *passwd)
+	fmt.Println("ip_port:", *ip_port)
+	fmt.Println("cmdstring:", *cmdstring)
 	config := &ssh.ClientConfig{
 		User: *username,
 		Auth: []ssh.AuthMethod{
 			ssh.Password(*passwd),
 		},
 		Config: ssh.Config{
-			Ciphers: []string{"aes128-cbc"},
+			Ciphers: []string{"aes128-cbc", "aes128-ctr"},
+		},
+		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+			return nil
 		},
 	}
 	// config.Config.Ciphers = append(config.Config.Ciphers, "aes128-cbc")
 	clinet, err := ssh.Dial("tcp", *ip_port, config)
-	checkError(err, "connet " + *ip_port)
+	checkError(err, "connet "+*ip_port)
 
 	session, err := clinet.NewSession()
 	defer session.Close()
